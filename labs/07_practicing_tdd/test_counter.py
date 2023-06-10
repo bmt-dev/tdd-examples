@@ -1,6 +1,16 @@
 """
 Test Cases for Counter Web Service
 """
+# Assume you have been asked to create a web service that can keep track of multiple counters. The web service has the following requirements:
+
+# The API must be RESTful.
+# The endpoint must be called /counters.
+# When creating a counter, you must specify the name in the path.
+# Duplicate names must return a conflict error code.
+# The service must be able to update a counter by name.
+# The service must be able to get a counter’s current value.
+# The service must be able to delete a counter.
+
 from unittest import TestCase
 import status
 from counter import app
@@ -25,3 +35,36 @@ class CounterTest(TestCase):
         self.assertEqual(result.status_code, status.HTTP_201_CREATED)
         result = self.client.post("/counters/bar")
         self.assertEqual(result.status_code, status.HTTP_409_CONFLICT)
+
+    def test_update_a_counter(self):
+        """It should increment the counter"""
+        result = self.client.post("/counters/baz")
+        self.assertEqual(result.status_code, status.HTTP_201_CREATED)
+        data = result.get_json()
+        baseline = data["baz"]
+        # Update the counter
+        result = self.client.put("/counters/baz")
+        self.assertEqual(result.status_code, status.HTTP_200_OK)
+        data = result.get_json()
+        self.assertEqual(data["baz"], baseline + 1)
+
+    def test_read_a_counter(self):
+        """It should read the counter"""
+        result = self.client.post("/counters/bin")
+        self.assertEqual(result.status_code, status.HTTP_201_CREATED)
+        # Read the counter
+        result = self.client.get("/counters/bin")
+        self.assertEqual(result.status_code, status.HTTP_200_OK)
+        data = result.get_json()
+        self.assertEqual(data["bin"], 0)
+
+    def test_delete_a_counter(self):
+        """It should delete the counter"""
+        result = self.client.post("/counters/fob")
+        self.assertEqual(result.status_code, status.HTTP_201_CREATED)
+        # Delete the counter
+        result = self.client.delete("/counters/fob")
+        self.assertEqual(result.status_code, status.HTTP_204_NO_CONTENT)
+        # Read the counter
+        result = self.client.get("/counters/fob")
+        self.assertEqual(result.status_code, status.HTTP_404_NOT_FOUND)
